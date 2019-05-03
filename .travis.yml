@@ -1,0 +1,21 @@
+sudo: required
+language: bash
+services:
+- docker
+env:
+  global:
+  - secure: KPXYcRmfKew2sLE+2Fbf4x8PPSSprO0RAAzKCKqjYzrWDXA8QxrsFkD11lXttw6rJEU+2Mds+kGYEBhGE6W/UWTYnuurYFwAt3B1SBackscAFqG/47MqmhhS0Xz8v/jE3AOBP3c81z4h+26Ea3uLtfD6FL34bjr/L9XNM12S/Fbq/fwvT/VGqsGgRotDxTfALbeO+pAde6V60kDXDRvDbUk5TNY7N1GEoaaNJTPRS/J+IbiweK9v1R8pSp1WX8OCej9jv5Pp8/hSrnc5FwGbwjoTULz/fFLdc9wgM/acD2B4swmmAyhrdMtav3rU1JWorUTLNkIUVDsRGTyRhRP08gH5GlPZlGMuULhQtphIuJfn482kmnueBa82foU8vtzNBHvI49CXFSx6Zfxv3cJ4qhzZPxBH2EsPSEl/eyr4LNeibf3LiWcofkncb+r17+ZF2C7UMjmCJaSUU4GjfhOioWW0eUaQhP4EqolFHvq/62l05pDnvk8/TtS2bJ76G/q7LagLLfU6stCU65opUBG8fB5V9aSPe+0dleaNpzT5YpbdUi8mHXaNgQo/Y38kHaKn7hKJ3f3odKl6At2hiINxOpQW3n7/L+DYlYPT6gd9q8LFg5RoTfRmG+Bm2PUDXI4wUqLiSGUS5hCAGcJQrsAf8oKz54LIKVShQPORBFK9/D4=
+  matrix:
+  - ARCH=armhf GOARCH=arm   GOARM=6 QEMU_ARCH=arm     TAG=arm
+  - ARCH=arm64 GOARCH=arm64 GOARM=6 QEMU_ARCH=arm64   TAG=arm64
+before_install:
+- curl -L https://goss.rocks/install | sudo sh
+- sudo apt-get -y install qemu-user-static
+- docker run --rm --privileged multiarch/qemu-user-static:register
+script:
+- docker build -t visibilityspots/fabio:$TAG --build-arg ARCH="$ARCH" --build-arg
+  GOARCH="$GOARCH" --build-arg GOARM="$GOARM" ./
+- dgoss run --name fabio -ti visibilityspots/fabio:$TAG
+after_success:
+- if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -u=visibilityspots -p="$DOCKER_PASSWORD";
+  docker push visibilityspots/fabio:$TAG; fi
