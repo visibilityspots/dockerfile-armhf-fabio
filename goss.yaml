@@ -1,5 +1,3 @@
 command:
   fabio -version | head -1:
     exit-status: 0
-    stdout:
-    - 1.5.11
