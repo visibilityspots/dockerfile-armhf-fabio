@@ -16,7 +16,11 @@ FROM multiarch/alpine:${ARCH}-edge
 
 LABEL maintainer="Jan Collijs"
 
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
+RUN echo 'http://dl-cdn.alpinelinux.org/alpine/edge/main' > /etc/apk/repositories ; \
+    echo 'http://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories; \
+    apk update; \
+    apk add ca-certificates; \
+    rm -rf /var/cache/apk/*
 
 COPY --from=gobuild /go/src/github.com/fabiolb/fabio/fabio /usr/local/bin/fabio
 
