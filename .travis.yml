@@ -19,3 +19,9 @@ script:
 after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -u=visibilityspots -p="$DOCKER_PASSWORD";
   docker push visibilityspots/fabio:$TAG; fi
+- docker pull visibilityspots/fabio:arm
+- docker pull visibilityspots/fabio:arm64
+- docker manifest create --amend visibilityspots/fabio:latest visibilityspots/fabio:arm visibilityspots/fabio:arm64
+- docker manifest annotate visibilityspots/fabio:latest visibilityspots/fabio:arm --os linux --arch arm
+- docker manifest annotate visibilityspots/fabio:latest visibilityspots/fabio:arm64 --os linux --arch arm64
+- docker manifest push --purge visibilityspots/fabio:latest
