@@ -1,35 +1,29 @@
 os: linux
 language: shell
+
 services:
 - docker
+
 env:
   global:
     secure: jNaFVkhsqGrWfWnUKdotMJ/DUGsFYHyLpGq+YbYP1OZXOgaUPWR1C6jb4D43550XQpN0zAi14/NdLJ52vLB6n8xios1QW3Kckub7PG3wdmsU4Gh/9C0mL1ahKIQY2cd3laUMD4GFv6G0IvmgQ8O5T4wXoJQ5IvnBjM/1yaxBJUBxO2nyNXDdP8mZYYJjnJOsXU+1Do+9PLRlW3hx2KzlV6ZejGcdTymzvbfquR/pDCr3+3svwrq7xop2MJMjFauZ7dzww5zaXQ+l7sSO0GPv1acZygHtHTlP4fRxsgqm0VFRbrpw7vl9pqV8Yi2L90nWtduFgPW+RxqM6Q43ucStTERIzcAfNrAAPTGbt5pt33BJlbqkcaDtbqfhlYAJroqsKjr/N16bFIDe57Eh8isvC1kMfyRTYAyMJLZsnxaHJcfuLormXvy3l2wZ7hJJsca7wbuLK748v15fT279vr5K9V2mNJ4vXl3ZLjp+Nhxt17hLxH1d6ygY4FJxRj4mAWPIcZp0Qeb04oR+PspnlCt0x5PXewKQ/ZoNp1R7bj4l2hfkm/YSev3dbGpBqsOC41/VVcnpI9ivxh+SspU5en9+OmcFDDO/t3dnkmC6rtLJd0ZwioUYNDFyRRoKeSF0yQ4uglsMWUfsXvLXz/yO8O0s0AWLhObybNFg8XjFlN4Rasg=
+
   matrix:
-  - ARCH=armhf GOARCH=arm   GOARM=6 QEMU_ARCH=arm     TAG=arm
-  - ARCH=arm64 GOARCH=arm64 GOARM=6 QEMU_ARCH=arm64   TAG=arm64
+  - ARCH=armhf GOARCH=arm   GOARM=6 QEMU_ARCH=arm   TAG=arm
+  - ARCH=arm64 GOARCH=arm64 GOARM=6 QEMU_ARCH=arm64 TAG=arm64
+
 before_install:
 - curl -L https://goss.rocks/install | sudo sh
 - sudo apt-get -y install qemu-user-static
 - docker run --rm --privileged multiarch/qemu-user-static:register
-- mkdir $HOME/.docker
-- |-
-  echo '{"experimental": "enabled"}' | tee $HOME/.docker/config.json
- - |-
-echo '{"experimental": true,"storage-driver": "overlay2","max-concurrent-downloads": 50,"max-concurrent-uploads": 50}' | sudo tee /etc/docker/daemon.json
-- sudo service docker restart
-- docker login -u=visibilityspots -p="$DOCKER_PASSWORD"
 
 jobs:
   include:
-    - stage: buildAndDeploy
+    - stage: build
       script:
-        - docker build -t visibilityspots/fabio:$TAG --build-arg ARCH="$ARCH" --build-arg GOARCH="$GOARCH" --build-arg GOARM="$GOARM" ./
-        - dgoss run --name fabio -ti visibilityspots/fabio:$TAG
-        - docker push visibilityspots/fabio:$TAG
-    - stage: createManifest
-      script:
-        - docker pull visibilityspots/fabio:$TAG
-        - docker manifest create --amend visibilityspots/fabio:latest visibilityspots/fabio:$TAG
-        - docker manifest annotate visibilityspots/fabio:latest visibilityspots/fabio:$TAG --os linux --arch $TAG
-        - docker manifest push --purge visibilityspots/fabio:latest
+      - docker build -t visibilityspots/fabio:$TAG --build-arg ARCH="$ARCH" --build-arg GOARCH="$GOARCH" --build-arg GOARM="$GOARM" ./
+      - dgoss run --name fabio -ti visibilityspots/fabio:$TAG
+
+after_success:
+- docker login -u=visibilityspots -p="$DOCKER_PASSWORD"
+- docker push visibilityspots/fabio:$TAG
